@@ -1,0 +1,42 @@
+
+
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+# URL de la page contenant le tableau des températures
+url = 'https://www.infoclimat.fr/climatologie/annee/2023/marseille-marignane-marseille-provence/valeurs/07650.html'
+
+# Envoyer une requête GET à l'URL
+response = requests.get(url)
+
+# Initialiser une liste pour stocker les données extraites
+donnees = []
+
+if response.status_code == 200:
+    # Analyser le contenu HTML de la page
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Trouver le tableau des températures par son ID
+    tableau_temp = soup.find('table', {'id': 'tableau-releves'})
+    
+    if tableau_temp:
+        # Extraire les rangées du tableau
+        lignes = tableau_temp.find_all('tr')
+        
+        for ligne in lignes:
+            # Extraire les cellules de chaque rangée
+            cellules = ligne.find_all(['th', 'td'])  # Inclure 'th' si les en-têtes sont importants pour vous
+            # Extraire le texte de chaque cellule et l'ajouter à la liste des données
+            donnees.append([cell.text.strip() for cell in cellules])
+
+        # Écrire les données dans un fichier CSV
+        with open("temperatures.csv", "w", encoding="utf-8", newline='') as fichier_csv:
+            ecrivain = csv.writer(fichier_csv)
+            ecrivain.writerows(donnees)
+        
+        print("Données des températures écrites dans 'temperatures.csv'.")
+    else:
+        print("Tableau des températures non trouvé.")
+else:
+    print("La requête a échoué avec le statut:", response.status_code)
